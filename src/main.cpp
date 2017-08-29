@@ -1,8 +1,4 @@
 /*
-src/example1.cpp -- C++ version of an example application that shows
-how to use the various widget classes. For a Python implementation, see
-'../python/example1.py'.
-
 NanoGUI was developed by Wenzel Jakob <wenzel.jakob@epfl.ch>.
 The widget drawing code is based on the NanoVG demo application
 by Mikko Mononen.
@@ -12,6 +8,15 @@ BSD-style license that can be found in the LICENSE.txt file.
 */
 
 #include "texture.h"
+#include "mesh.h"
+
+
+/*
+
+*/
+
+
+
 
 #if defined(__GNUC__)
 #  pragma GCC diagnostic ignored "-Wmissing-field-initializers"
@@ -43,11 +48,10 @@ using std::to_string;
 class ExampleApplication : public nanogui::Screen {
 
   public:
+    Mesh *mesh;
 
     ExampleApplication() : nanogui::Screen(Eigen::Vector2i(1024, 768), "NanoGUI Test") {
       using namespace nanogui;
-
-
 
 
 
@@ -235,7 +239,7 @@ class ExampleApplication : public nanogui::Screen {
       textBox->setFixedSize(Vector2i(60,25));
       textBox->setFontSize(20);
       textBox->setAlignment(TextBox::Alignment::Right);
-
+      */
 
 
 
@@ -302,7 +306,7 @@ class ExampleApplication : public nanogui::Screen {
       tabWidget->setActiveTab(0);
 
       // A button to go back to the first tab and scroll the window.
-      panel = window->add<Widget>();
+      Widget *panel = window->add<Widget>();
       panel->add<Label>("Jump to tab: ");
       panel->setLayout(new BoxLayout(Orientation::Horizontal,Alignment::Middle, 0, 6));
 
@@ -323,7 +327,7 @@ class ExampleApplication : public nanogui::Screen {
 
 
 
-
+      /*
       window = new Window(this, "Grid of small widgets");
       window->setPosition(Vector2i(425, 300));
       GridLayout *layout = new GridLayout(Orientation::Horizontal, 2, Alignment::Middle, 15, 5);
@@ -412,40 +416,28 @@ class ExampleApplication : public nanogui::Screen {
       buffer object management.
       */
 
-      mShader.init(
-        /* An identifying name */
-        "a_simple_shader",
+      mesh = new Mesh("/home/norgeot/untitled.mesh");
+      mShader.initFromFiles("a_simple_shader", std::string(SHADERS_PATH) + "/simple_shader.vert",  std::string(SHADERS_PATH) + "/simple_shader.frag");
 
-        /* Vertex shader */
-        "#version 330\n"
-        "uniform mat4 modelViewProj;\n"
-        "in vec3 position;\n"
-        "void main() {\n"
-        "    gl_Position = modelViewProj * vec4(position, 1.0);\n"
-        "}",
+      MatrixXu indices(3, mesh->indTri.size()); /* Draw 2 triangles */
+      for(int i = 0 ; i < mesh->indTri.size() ; i++){
+        indices.col(i) << mesh->indTri[3*i+0], mesh->indTri[3*i+1], mesh->indTri[3*i+2];
+      }
 
-        /* Fragment shader */
-        "#version 330\n"
-        "out vec4 color;\n"
-        "uniform float intensity;\n"
-        "void main() {\n"
-        "    color = vec4(vec3(intensity), 1.0);\n"
-        "}"
-      );
+      MatrixXf positions(3, mesh->vertices.size());
+      for(int i = 0 ; i < mesh->vertices.size() ; i++){
+        positions.col(i) << mesh->vertices[3*i+0], mesh->vertices[3*i+1], mesh->vertices[3*i+2];
+      }
 
-      MatrixXu indices(3, 2); /* Draw 2 triangles */
-      indices.col(0) << 0, 1, 2;
-      indices.col(1) << 2, 3, 0;
-
-      MatrixXf positions(3, 4);
-      positions.col(0) << -1, -1, 0;
-      positions.col(1) <<  1, -1, 0;
-      positions.col(2) <<  1,  1, 0;
-      positions.col(3) << -1,  1, 0;
+      MatrixXf colors(3, mesh->vertices.size());
+      for(int i = 0 ; i < mesh->vertices.size() ; i++){
+        colors.col(i) << 255,255,255;
+      }
 
       mShader.bind();
       mShader.uploadIndices(indices);
       mShader.uploadAttrib("position", positions);
+      mShader.uploadAttrib("col", colors);
       mShader.setUniform("intensity", 0.5f);
     }
 
@@ -487,7 +479,9 @@ class ExampleApplication : public nanogui::Screen {
       mShader.setUniform("modelViewProj", mvp);
 
       /* Draw 2 triangles starting at index 0 */
-      mShader.drawIndexed(GL_TRIANGLES, 0, 2);
+      //glPolygonMode( GL_FRONT_AND_BACK, GL_LINE );
+      mShader.drawIndexed(GL_TRIANGLES, 0, mesh->indTri.size()/3);
+      glPolygonMode( GL_FRONT_AND_BACK, GL_FILL );
     }
 
   private:
@@ -509,6 +503,8 @@ int main(int /* argc */, char ** /* argv */) {
     /* scoped variables */
     {
       nanogui::ref<ExampleApplication> app = new ExampleApplication();
+      app->setCaption("Test 2");
+      app->setBackground(nanogui::Color(0,0,15,1));
       app->drawAll();
       app->setVisible(true);
       nanogui::mainloop();

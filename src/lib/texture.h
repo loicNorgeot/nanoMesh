@@ -1,6 +1,7 @@
+#ifndef TEXTUREDEF
+#define TEXTUREDEF
+
 #include "commons.h"
-
-
 
 class GLTexture {
 
@@ -35,3 +36,5 @@ class GLTexture {
     GLuint mTextureId;
 
 };
+
+#endif

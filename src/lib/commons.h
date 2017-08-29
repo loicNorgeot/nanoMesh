@@ -1,7 +1,14 @@
+#ifndef COMMONS
+#define COMMONS
 
 // system includes
 #include <iostream>
 #include <string>
+#include <vector>
+
+#include <cstdlib>
+#include <fstream>
+#include <stdio.h>
 
 // Includes for the GLTexture class.
 #include <cstdint>
@@ -32,5 +39,5 @@
 #include <nanogui/graph.h>
 #include <nanogui/tabwidget.h>
 
-
 // API includes
+#endif
